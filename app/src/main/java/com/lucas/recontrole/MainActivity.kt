@@ -11,6 +11,7 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -93,6 +94,18 @@ fun LoginScreen() {
         LoginButton(
             onClick = {onClick()},
         )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Ainda não possui uma conta?")
+            Text(
+                text = "Clique aqui.",
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {}
+                    .padding(8.dp)
+            )
+        }
     }
 }
 
