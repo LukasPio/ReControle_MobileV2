@@ -1,5 +1,6 @@
 package com.lucas.recontrole.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.lucas.recontrole.R
+import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
 import com.lucas.recontrole.components.PasswordInputField
 import com.lucas.recontrole.components.SubmitButton
@@ -36,6 +40,7 @@ fun LoginScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        AppLogo()
         EmailInputField(
             email = email,
             onEmailChange = { email = it }

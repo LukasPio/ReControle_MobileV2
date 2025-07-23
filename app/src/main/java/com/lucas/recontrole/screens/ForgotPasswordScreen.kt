@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
 import com.lucas.recontrole.components.ResetPasswordButton
 
@@ -33,6 +34,7 @@ fun ForgotPasswordScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        AppLogo()
         Text(
             text = "Esqueceu a senha?",
             style = MaterialTheme.typography.headlineSmall

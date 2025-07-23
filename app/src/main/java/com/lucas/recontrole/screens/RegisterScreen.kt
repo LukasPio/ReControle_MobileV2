@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
 import com.lucas.recontrole.components.PasswordInputField
 import com.lucas.recontrole.components.SubmitButton
@@ -40,6 +41,7 @@ fun RegisterScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
 
         ) {
+        AppLogo()
         UserNameInputField(
             name,
             {it -> name = it}
