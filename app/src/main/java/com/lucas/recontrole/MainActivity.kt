@@ -31,9 +31,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    Firebase.auth.signOut()
-    val initialScreen = if (Firebase.auth.currentUser != null) "home" else "login"
-    NavHost(navController = navController, startDestination = initialScreen) {
+//    val initialScreen = if (Firebase.auth.currentUser != null) "home" else "login"
+    NavHost(navController = navController, startDestination = "home") {
         composable("home") { HomeScreen(navController) }
         composable("register") { RegisterScreen(navController) }
         composable("login") {LoginScreen(navController)}
