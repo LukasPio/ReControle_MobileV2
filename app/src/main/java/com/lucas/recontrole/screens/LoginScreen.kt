@@ -1,6 +1,7 @@
 package com.lucas.recontrole.screens
 
-import androidx.compose.foundation.Image
+import android.util.Log
+import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,12 +20,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.lucas.recontrole.R
+import com.google.firebase.Firebase
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.auth
+import com.lucas.recontrole.DTOs.UserLoginDTO
 import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
+import com.lucas.recontrole.components.ErrorDialog
 import com.lucas.recontrole.components.PasswordInputField
 import com.lucas.recontrole.components.SubmitButton
 
@@ -32,6 +38,8 @@ import com.lucas.recontrole.components.SubmitButton
 fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -66,7 +74,21 @@ fun LoginScreen(navController: NavController) {
         )
         SubmitButton(
             text = "Login",
-            onClick = {},
+            onClick = {
+                login(
+                    userLoginDTO = UserLoginDTO(email, password),
+                    onSuccess = {
+                        showErrorDialog = false
+                        navController.navigate("home") {
+                            popUpTo(0) {inclusive = true}
+                        }
+                    },
+                    onError = {
+                        errorMessage = it
+                        showErrorDialog = true
+                    }
+                )
+            },
             modifier = Modifier.padding(12.dp)
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -82,5 +104,54 @@ fun LoginScreen(navController: NavController) {
                 }
             )
         }
+        if (showErrorDialog) {
+            ErrorDialog(
+                onDismissRequest = {showErrorDialog = false},
+                onConfirmation = {showErrorDialog = false},
+                dialogText = errorMessage
+            )
+        }
     }
+}
+
+private fun login(
+    userLoginDTO: UserLoginDTO,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+) {
+    val validData = validate(userLoginDTO);
+
+    if (!validData.first) {
+        onError(validData.second)
+        return
+    }
+
+    val auth = Firebase.auth
+    auth.signInWithEmailAndPassword(userLoginDTO.email, userLoginDTO.password).addOnFailureListener { error ->
+        when (error) {
+            is FirebaseAuthInvalidUserException -> onError("Nenhum usuário com esse e-mail foi encontrado")
+            is FirebaseAuthInvalidCredentialsException -> onError("E-mail ou senha inválidos")
+            is FirebaseTooManyRequestsException -> onError("Muitas tentativas. Tente novamente mais tarde")
+            else -> onError("Erro inesperado. Tente novamente ou entre em contato com o suporte")
+        }
+    }.addOnSuccessListener { result ->
+        if (result.user?.isEmailVerified == false) {
+            onError("Por favor, verifique seu e-mail antes de realizar o login")
+            result.user?.sendEmailVerification()
+            return@addOnSuccessListener
+        }
+        onSuccess()
+    }
+}
+
+private fun validate(userLoginDTO: UserLoginDTO): Pair<Boolean, String> {
+    if (userLoginDTO.email.isBlank() || userLoginDTO.password.isBlank()) {
+        return false to "Todos os campos devem ser preenchidos"
+    }
+
+    if (!Patterns.EMAIL_ADDRESS.matcher(userLoginDTO.email).matches()) {
+        return false to "E-mail inválido"
+    }
+
+    return true to ""
 }

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "413353502819",
+    "firebase_url": "https://recontrole-b3815-default-rtdb.firebaseio.com",
+    "project_id": "recontrole-b3815",
+    "storage_bucket": "recontrole-b3815.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413353502819:android:bb330d5d39c8f3639b7056",
+        "android_client_info": {
+          "package_name": "com.lucas.recontrole"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "413353502819-m420agqjrvnkk87kclg3juku1s1lnp7k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_Fl-y_XRskHklTwZfi5t1EZKWILB8goE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "413353502819-m420agqjrvnkk87kclg3juku1s1lnp7k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "413353502819-prdmo9hfg6rs1m9nc6cjpc44c77hcn98.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lukas.recontrole"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
