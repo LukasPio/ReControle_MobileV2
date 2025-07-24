@@ -19,14 +19,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
+import com.lucas.recontrole.components.ErrorDialog
 import com.lucas.recontrole.components.ResetPasswordButton
+import com.lucas.recontrole.components.SimpleAlertDialog
 
 @Composable
 fun ForgotPasswordScreen(navController: NavController) {
     var email by remember  {mutableStateOf("")}
-
+    var showSimpleAlertDialog by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -53,7 +57,10 @@ fun ForgotPasswordScreen(navController: NavController) {
             onEmailChange = {email = it},
         )
         ResetPasswordButton(modifier = Modifier.padding(16.dp), onClick = {
-
+            sendPasswordResetLink(
+                email, onComplete = {
+                    showSimpleAlertDialog = true
+                })
         })
         Text(
             text = "Voltar",
@@ -65,5 +72,27 @@ fun ForgotPasswordScreen(navController: NavController) {
                 navController.popBackStack()
             }
         )
+        if (showSimpleAlertDialog) {
+            SimpleAlertDialog(
+                onDismissRequest = {
+                    showSimpleAlertDialog = false
+                    navController.navigate("login")
+                },
+                onConfirmation = {
+                    showSimpleAlertDialog = false
+                    navController.navigate("login")
+                },
+                "Redefina sua senha",
+                "Um link para redefinição foi enviado"
+            )
+        }
     }
+}
+
+private fun sendPasswordResetLink(
+    email: String,
+    onComplete: () -> Unit
+) {
+    Firebase.auth.sendPasswordResetEmail(email)
+    onComplete()
 }

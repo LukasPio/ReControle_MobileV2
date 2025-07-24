@@ -129,7 +129,7 @@ fun RegisterScreen(navController: NavController) {
                     navController.navigate("login")
                                  },
                 "Sua conta foi criada!",
-                "Por favor, cheque seu email para verificação do mesmo."
+                "Por favor, cheque seu email para verificação do mesmo"
             )
         }
     }
