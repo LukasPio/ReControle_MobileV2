@@ -23,11 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWebException
 import com.google.firebase.auth.auth
 import com.google.firebase.auth.userProfileChangeRequest
-import com.google.firebase.firestore.auth.User
-import com.google.firebase.firestore.firestore
 import com.lucas.recontrole.Constants
 import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
@@ -35,10 +32,8 @@ import com.lucas.recontrole.components.ErrorDialog
 import com.lucas.recontrole.components.PasswordInputField
 import com.lucas.recontrole.components.SubmitButton
 import com.lucas.recontrole.components.UserNameInputField
-import com.lucas.recontrole.DTOs.SavedUserDTO
-import com.lucas.recontrole.DTOs.UserRequestDTO
+import com.lucas.recontrole.dtos.UserRequestDTO
 import com.lucas.recontrole.components.SimpleAlertDialog
-import kotlinx.coroutines.tasks.await
 
 @Composable
 fun RegisterScreen(navController: NavController) {

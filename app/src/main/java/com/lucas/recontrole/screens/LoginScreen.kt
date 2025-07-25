@@ -1,6 +1,5 @@
 package com.lucas.recontrole.screens
 
-import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,7 +26,7 @@ import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.auth
-import com.lucas.recontrole.DTOs.UserLoginDTO
+import com.lucas.recontrole.dtos.UserLoginDTO
 import com.lucas.recontrole.components.AppLogo
 import com.lucas.recontrole.components.EmailInputField
 import com.lucas.recontrole.components.ErrorDialog
