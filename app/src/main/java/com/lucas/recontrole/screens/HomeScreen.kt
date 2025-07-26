@@ -1,23 +1,40 @@
 package com.lucas.recontrole.screens
 
+import android.graphics.Bitmap
+import android.util.Base64
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,20 +45,29 @@ import com.google.firebase.auth.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.lucas.recontrole.Constants
 import com.lucas.recontrole.R
 import com.lucas.recontrole.Status
 import com.lucas.recontrole.components.AppTopBar
+import com.lucas.recontrole.components.FullScreenModal
+import com.lucas.recontrole.components.GenericInputField
 import com.lucas.recontrole.components.OccurrenceCard
 import com.lucas.recontrole.dtos.OccurrenceDTO
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    val occurrencesState = remember { mutableStateOf<List<OccurrenceDTO>>(emptyList())}
-    val finishedLoading = remember { mutableStateOf(false) }
+    var occurrencesState by remember { mutableStateOf<List<OccurrenceDTO>>(emptyList())}
+    var finishedLoading by remember { mutableStateOf(false) }
+    var showModal by remember { mutableStateOf(false) }
+
+    var occurrenceLocal by remember { mutableStateOf("") }
+    var occurrenceDescription by remember { mutableStateOf("") }
+    var occurrenceImage by remember { mutableStateOf("") }
+
     androidx.compose.runtime.LaunchedEffect(Unit) {
         getOccurrences { occurrences ->
-            occurrencesState.value = occurrences
-            finishedLoading.value = true
+            occurrencesState = occurrences
+            finishedLoading = true
         }
     }
 
@@ -52,11 +78,14 @@ fun HomeScreen(navController: NavController) {
             verticalArrangement = Arrangement.Top
         ) {
             item {
-                AppTopBar(onAvatarIconClick = {}, onMoreVertIconClick = {}, title = "Tickets")
+                AppTopBar(
+                    title = "Tickets",
+                    navController = navController
+                )
             }
             item {
-                if (finishedLoading.value) {
-                    if (occurrencesState.value.isEmpty()) {
+                if (finishedLoading) {
+                    if (occurrencesState.isEmpty()) {
                         Text(
                             "Parece que você ainda não abriu nenhum ticket!",
                             textAlign = TextAlign.Center,
@@ -66,7 +95,7 @@ fun HomeScreen(navController: NavController) {
                     }
                     else {
                         Spacer(Modifier.height(20.dp))
-                        occurrencesState.value.forEach { occurrence ->
+                        occurrencesState.forEach { occurrence ->
                             OccurrenceCard(
                                 occurrence.title,
                                 "Local X",
@@ -96,8 +125,52 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .size(110.dp)
-                .padding(16.dp)
+                .padding(16.dp).clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(radius = 50.dp)
+                ){
+                    showModal = true
+                }
         )
+
+        if (showModal) {
+            FullScreenModal(
+                onDismiss = {showModal = false},
+                content = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .fillMaxHeight(0.5f)
+                    ) {
+                        Text(
+                            text = "Insira as informações:",
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        GenericInputField(
+                            title = "Local",
+                            placeholder = "Insira o local da ocorrência",
+                            text = occurrenceLocal,
+                            onTextChange = {it -> if(it.length <= Constants.MAX_OCCURRENCE_LOCAL_LENGTH) occurrenceLocal = it},
+                            icon = R.drawable.baseline_location_pin_24,
+                            iconDescription = "Local icon",
+                            singleLine = true,
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        GenericInputField(
+                            title = "Descrição",
+                            placeholder = "Insira uma breve descrição",
+                            text = occurrenceDescription,
+                            onTextChange = {it -> if(it.length <= Constants.MAX_OCCURRENCE_DESCRIPTION_LENGTH) occurrenceDescription = it},
+                            icon = R.drawable.outline_text_24,
+                            iconDescription = "Text icon",
+                            singleLine = false
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 

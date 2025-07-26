@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,26 +15,35 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.lucas.recontrole.R
 
 @Composable
 fun AppTopBar(
     modifier: Modifier = Modifier,
-    onAvatarIconClick: () -> Unit,
-    onMoreVertIconClick: () -> Unit,
-    title: String = ""
+    title: String = "",
+    navController: NavController
 ) {
+    var expanded by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.fillMaxWidth()
             .height(110.dp)
@@ -64,17 +74,42 @@ fun AppTopBar(
                 Modifier.size(30.dp).clickable(
                     indication = ripple(radius = 15.dp),
                     interactionSource = remember {MutableInteractionSource()}
-                ){onAvatarIconClick}
+                ){}
             )
             Spacer(Modifier.width(16.dp))
-            Image(
-                imageVector = Icons.Default.MoreVert,
-                contentDescription = "Avatar icon",
-                Modifier.size(30.dp).clickable(
-                    indication = ripple(radius = 15.dp),
-                    interactionSource = remember {MutableInteractionSource()}
-                ){onMoreVertIconClick}
-            )
+            Box {
+                Image(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More vert icon",
+                    Modifier.size(30.dp).clickable(
+                        indication = ripple(radius = 15.dp),
+                        interactionSource = remember {MutableInteractionSource()}
+                    ){
+                        expanded = true
+                    }
+                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = {expanded = false}
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Sair",
+                                fontSize = 18.sp
+                            )
+                        }, {
+                            expanded = false
+                            Firebase.auth.signOut()
+                            navController.navigate("login") {
+                                popUpTo("home") {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }
