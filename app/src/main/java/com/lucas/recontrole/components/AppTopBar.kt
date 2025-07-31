@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +42,7 @@ import com.lucas.recontrole.R
 fun AppTopBar(
     modifier: Modifier = Modifier,
     title: String = "",
-    navController: NavController
+    navController: NavController,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
@@ -96,7 +97,7 @@ fun AppTopBar(
                         text = {
                             Text(
                                 text = "Sair",
-                                fontSize = 18.sp
+                                fontSize = 16.sp
                             )
                         }, {
                             expanded = false
@@ -105,6 +106,19 @@ fun AppTopBar(
                                 popUpTo("home") {
                                     inclusive = true
                                 }
+                            }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Sincronizar",
+                                fontSize = 16.sp
+                            )
+                        }, {
+                            expanded = false
+                            navController.navigate("home") {
+                                popUpTo("home") {inclusive = true}
                             }
                         }
                     )

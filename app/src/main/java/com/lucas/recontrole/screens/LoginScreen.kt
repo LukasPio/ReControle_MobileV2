@@ -135,7 +135,7 @@ private fun login(
         }
     }.addOnSuccessListener { result ->
         if (result.user?.isEmailVerified == false) {
-            onError("Por favor, verifique seu e-mail antes de realizar o login")
+            onError("Verifique seu e-mail! Um novo link de verificação foi enviado")
             result.user?.sendEmailVerification()
             return@addOnSuccessListener
         }

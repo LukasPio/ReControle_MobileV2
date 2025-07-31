@@ -22,8 +22,8 @@ fun GenericInputField(
     onTextChange: (String) -> Unit,
     @DrawableRes icon: Int,
     iconDescription: String,
-    singleLine: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true,
 ) {
     OutlinedTextField(
         value = text,

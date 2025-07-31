@@ -1,5 +1,6 @@
 package com.lucas.recontrole.dtos
 
+import android.graphics.Bitmap
 import com.lucas.recontrole.Status
 
 data class OccurrenceDTO(
@@ -7,6 +8,7 @@ data class OccurrenceDTO(
     val title: String = "",
     val description: String = "",
     val status: Status = Status.PENDENT,
-    val imgUrl: String = "",
-    val author: String = ""
+    val imgBase64: String = "",
+    val author: String = "",
+    val local: String = ""
 )
