@@ -5,7 +5,6 @@ import com.lucas.recontrole.Status
 
 data class OccurrenceDTO(
     val id: String = "",
-    val title: String = "",
     val description: String = "",
     val status: Status = Status.PENDENT,
     val imgBase64: String = "",

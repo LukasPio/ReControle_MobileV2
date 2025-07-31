@@ -4,9 +4,16 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -14,48 +21,54 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lucas.recontrole.Status
+import com.lucas.recontrole.dtos.OccurrenceDTO
 
 @Composable
 fun OccurrenceCard(
-    title: String,
-    local: String,
-    status: Status,
-    image: Bitmap
+    occurrenceDTO: OccurrenceDTO,
+    image: Bitmap,
+    onClick: (OccurrenceDTO, Bitmap) -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiary,
-            contentColor = MaterialTheme.colorScheme.secondary
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.tertiary
         ),
         modifier = Modifier.padding(8.dp)
             .fillMaxWidth(0.9f)
-            .height(200.dp),
-    ) {
-        Image(
-            bitmap = image.asImageBitmap(),
-            contentDescription = "Photo of an occurrence",
-        )
-        Text(
-            text = title,
-            fontSize = 20.sp
-        )
-        Text(
-            text = local
-        )
-        Text(
-            text = when(status) {
-                Status.PENDENT -> "Pendente"
-                Status.ON_PROGRESS -> "Em andamento"
-                Status.FINISHED -> "Concluído"
+            .height(150.dp).clickable{
+                onClick(
+                    occurrenceDTO, image
+                )
             }
-        )
+    ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+               Column {
+                   Text(
+                       text = occurrenceDTO.local,
+                       style = MaterialTheme.typography.headlineMedium
+                   )
+                   Text(
+                       text = when(occurrenceDTO.status) {
+                           Status.PENDENT -> "Pendente"
+                           Status.ON_PROGRESS -> "Em andamento"
+                           Status.FINISHED -> "Concluído"
+                       }
+                   )
+               }
+                Image(
+                    bitmap = image.asImageBitmap(),
+                    contentDescription = "Photo of an occurrence",
+                    modifier = Modifier.height(100.dp).width(100.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
     }
-}
-
-private fun base64ToBitmap(base64String: String): Bitmap {
-    val decodeBytes = Base64.decode(base64String, Base64.DEFAULT)
-    return BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.size)
 }

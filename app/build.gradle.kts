@@ -3,8 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("kotlin-kapt") // Use KAPT instead
 }
-
 android {
     namespace = "com.lucas.recontrole"
     compileSdk = 36
@@ -42,6 +42,7 @@ android {
 
 dependencies {
     val nav_version = "2.9.2"
+    val roomVersion = "2.6.1"
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -82,5 +83,10 @@ dependencies {
     implementation("com.google.firebase:firebase-database")
 
     implementation("com.google.firebase:firebase-firestore")
+
+    // Room
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion") // Use kapt instead of ksp
 
 }

@@ -43,6 +43,7 @@ fun AppTopBar(
     modifier: Modifier = Modifier,
     title: String = "",
     navController: NavController,
+    onSync: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     Row(
@@ -117,9 +118,7 @@ fun AppTopBar(
                             )
                         }, {
                             expanded = false
-                            navController.navigate("home") {
-                                popUpTo("home") {inclusive = true}
-                            }
+                            onSync()
                         }
                     )
                 }
