@@ -9,5 +9,6 @@ data class OccurrenceDTO(
     val status: Status = Status.PENDENT,
     val imgBase64: String = "",
     val author: String = "",
-    val local: String = ""
+    val local: String = "",
+    val category: String = ""
 )

@@ -18,4 +18,6 @@ interface OccurrenceDao {
     suspend fun clearAll()
     @Query("DELETE FROM occurrences WHERE id = :id")
     fun deleteById(id: String)
+    @Query("SELECT * FROM occurrences WHERE id = :id LIMIT 1")
+    suspend fun findById(id: String): OccurrenceEntity?
 }

@@ -36,6 +36,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,6 +68,7 @@ import com.lucas.recontrole.components.ErrorDialog
 import com.lucas.recontrole.components.FullScreenModal
 import com.lucas.recontrole.components.GenericInputField
 import com.lucas.recontrole.components.OccurrenceCard
+import com.lucas.recontrole.components.OccurrenceObjectDropdown
 import com.lucas.recontrole.components.PhotoModal
 import com.lucas.recontrole.components.SubmitButton
 import com.lucas.recontrole.db.AppDatabase
@@ -93,8 +95,11 @@ fun HomeScreen(navController: NavController) {
     var occurrencePhotoBase64 by remember { mutableStateOf("") }
     var occurrenceLocal by remember { mutableStateOf("") }
     var occurrenceDescription by remember { mutableStateOf("") }
+    var occurrenceCategory by remember {mutableStateOf("")}
 
-    var reloadTrigger by remember { mutableStateOf(0) }
+    var reloadTrigger by remember { mutableIntStateOf(0) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var itemToDelete by remember { mutableStateOf("") }
 
     LaunchedEffect(reloadTrigger) {
         finishedLoading = false
@@ -143,7 +148,7 @@ fun HomeScreen(navController: NavController) {
             if (finishedLoading && occurrencesState.isEmpty()) {
                 item {
                     Text(
-                        "Parece que você ainda não abriu nenhum ticket!",
+                        "Parece que ainda não existe nenhum ticket por aqui, tente sincronizar!",
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 50.dp, start = 8.dp, end = 8.dp),
                         style = MaterialTheme.typography.headlineLarge,
@@ -280,21 +285,11 @@ fun HomeScreen(navController: NavController) {
                         Spacer(Modifier.height(8.dp))
                         Button(
                             onClick = {
-                                deleteOccurrence(
-                                    context = context,
-                                    occurrenceId = occurrenceModalContent.id,
-                                    onSuccess = {
-                                        shouldShowOccurrenceModal = false
-                                        reloadTrigger++
-                                    },
-                                    onError = { errorMessage ->
-                                        shouldShowOccurrenceModal = false
-                                        dialogText = errorMessage
-                                        shouldShowDialog = true
-                                    }
-                                )
+                                itemToDelete = occurrenceModalContent.id
+                                showDeleteConfirmation = true
                             },
                             colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(8.dp),
@@ -302,6 +297,65 @@ fun HomeScreen(navController: NavController) {
                         ) {
                             Text("Apagar ocorrência")
                         }
+                    }
+                }
+            )
+        }
+
+        if (showDeleteConfirmation) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = {
+                    showDeleteConfirmation = false
+                    itemToDelete = ""
+                },
+                title = {
+                    Text("Confirmar deleção")
+                },
+                text = {
+                    Text("Tem certeza que deseja apagar esta ocorrência? Esta ação não pode ser desfeita.")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            Log.d("HomeScreen", "Confirmando deleção do item: $itemToDelete")
+                            showDeleteConfirmation = false
+
+                            deleteOccurrence(
+                                context = context,
+                                occurrenceId = itemToDelete,
+                                onSuccess = {
+                                    Log.d("HomeScreen", "Deleção bem-sucedida, fechando modal e recarregando")
+                                    shouldShowOccurrenceModal = false
+                                    reloadTrigger++
+                                    itemToDelete = ""
+                                },
+                                onError = { errorMessage ->
+                                    Log.e("HomeScreen", "Erro na deleção: $errorMessage")
+                                    shouldShowOccurrenceModal = false
+                                    dialogText = errorMessage
+                                    shouldShowDialog = true
+                                    itemToDelete = ""
+                                }
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red
+                        )
+                    ) {
+                        Text("Confirmar", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            showDeleteConfirmation = false
+                            itemToDelete = ""
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Gray
+                        )
+                    ) {
+                        Text("Cancelar", color = Color.White)
                     }
                 }
             )
@@ -350,12 +404,16 @@ fun HomeScreen(navController: NavController) {
                             singleLine = false,
                         )
                         Spacer(Modifier.height(12.dp))
+                        OccurrenceObjectDropdown(
+                            onValueChange = {occurrenceCategory = it}
+                        )
+                        Spacer(Modifier.height(12.dp))
                         PhotoModal { occurrencePhotoBase64 = it }
                         Spacer(Modifier.height(16.dp))
                         SubmitButton(
                             "Enviar ticket",
                             {
-                                if (occurrenceLocal.isEmpty() || occurrenceDescription.isEmpty()) {
+                                if (occurrenceLocal.isEmpty() || occurrenceDescription.isEmpty() || occurrenceCategory.isEmpty()) {
                                     dialogText = "Todos os campos devem ser preenchidos"
                                     shouldShowDialog = true
                                     return@SubmitButton
@@ -370,7 +428,8 @@ fun HomeScreen(navController: NavController) {
                                     OccurrenceDTO(
                                         local = occurrenceLocal,
                                         description = occurrenceDescription,
-                                        imgBase64 = occurrencePhotoBase64
+                                        imgBase64 = occurrencePhotoBase64,
+                                        category = occurrenceCategory
                                     ),
                                     onSuccess = { reloadTrigger++ }
                                 )
@@ -379,6 +438,7 @@ fun HomeScreen(navController: NavController) {
                                 occurrenceLocal = ""
                                 occurrenceDescription = ""
                                 occurrencePhotoBase64 = ""
+                                occurrenceCategory = ""
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -389,98 +449,191 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+// FUNÇÃO DE DELETAR CORRIGIDA
 private fun deleteOccurrence(
     context: Context,
     occurrenceId: String,
     onSuccess: () -> Unit,
     onError: (String) -> Unit
 ) {
+    Log.d("DeleteOccurrence", "Iniciando deleção do item: $occurrenceId")
+
     val userId = Firebase.auth.currentUser?.uid
     if (userId == null) {
+        Log.e("DeleteOccurrence", "Usuário não autenticado")
         onError("Usuário não autenticado.")
         return
     }
 
-    val reportRef = FirebaseDatabase.getInstance()
-        .getReference("reports")
-        .child(occurrenceId)
-        .child("content")
+    if (occurrenceId.isEmpty()) {
+        Log.e("DeleteOccurrence", "ID da ocorrência está vazio")
+        onError("ID da ocorrência inválido.")
+        return
+    }
 
-    // Delete lógico: adiciona campo 'deleted' com timestamp
-    val deleteData = mapOf(
-        "deleted" to true,
-        "deletedAt" to System.currentTimeMillis(),
-        "deletedBy" to userId
-    )
+    try {
+        // Primeiro, tentar deletar do Firebase
+        val reportRef = FirebaseDatabase.getInstance()
+            .getReference("reports")
+            .child(occurrenceId)
+            .child("content")
 
-    reportRef.updateChildren(deleteData)
-        .addOnSuccessListener {
-            // Remove do cache local
-            CoroutineScope(Dispatchers.IO).launch {
-                val db = AppDatabase.getDatabase(context)
-                val dao = db.occurrenceDao()
-                dao.deleteById(occurrenceId)
+        Log.d("DeleteOccurrence", "Tentando deletar do Firebase: reports/$occurrenceId/content")
 
-                withContext(Dispatchers.Main) {
-                    onSuccess()
-                }
+        // Verificar se o item existe antes de tentar deletar
+        reportRef.get().addOnSuccessListener { snapshot ->
+            if (!snapshot.exists()) {
+                Log.w("DeleteOccurrence", "Item não existe no Firebase: $occurrenceId")
+                onError("Item não encontrado.")
+                return@addOnSuccessListener
             }
+
+            // Verificar se o usuário é o autor
+            val autor = snapshot.child("autor").getValue(String::class.java)
+            if (autor != userId) {
+                Log.w("DeleteOccurrence", "Usuário $userId tentando deletar item de $autor")
+                onError("Você só pode deletar suas próprias ocorrências.")
+                return@addOnSuccessListener
+            }
+
+            // Delete lógico: adiciona campo 'deleted' com timestamp
+            val deleteData = mapOf(
+                "deleted" to true,
+                "deletedAt" to System.currentTimeMillis(),
+                "deletedBy" to userId
+            )
+
+            Log.d("DeleteOccurrence", "Aplicando delete lógico...")
+            reportRef.updateChildren(deleteData)
+                .addOnSuccessListener {
+                    Log.d("DeleteOccurrence", "Delete no Firebase bem-sucedido")
+
+                    // Remove do cache local
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val db = AppDatabase.getDatabase(context)
+                            val dao = db.occurrenceDao()
+
+                            // Verificar se existe no banco local antes de deletar
+                            val existingItem = dao.findById(occurrenceId)
+                            if (existingItem != null) {
+                                dao.deleteById(occurrenceId)
+                                Log.d("DeleteOccurrence", "Item removido do cache local")
+                            } else {
+                                Log.w("DeleteOccurrence", "Item não estava no cache local")
+                            }
+
+                            withContext(Dispatchers.Main) {
+                                Log.d("DeleteOccurrence", "Deleção concluída com sucesso")
+                                onSuccess()
+                            }
+
+                        } catch (e: Exception) {
+                            Log.e("DeleteOccurrence", "Erro ao remover do cache local: ${e.message}")
+                            // Mesmo com erro no cache, se deletou do Firebase é sucesso
+                            withContext(Dispatchers.Main) {
+                                onSuccess()
+                            }
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("DeleteOccurrence", "Erro ao deletar do Firebase: ${e.message}")
+                    onError("Erro ao deletar do servidor: ${e.message}")
+                }
+
+        }.addOnFailureListener { e ->
+            Log.e("DeleteOccurrence", "Erro ao verificar existência do item: ${e.message}")
+            onError("Erro ao acessar o servidor: ${e.message}")
         }
-        .addOnFailureListener { e ->
-            Log.e("Firebase", "Erro ao deletar ocorrência: ${e.message}")
-            onError("Erro ao deletar ocorrência: ${e.message}")
-        }
+
+    } catch (e: Exception) {
+        Log.e("DeleteOccurrence", "Erro fatal na função de deletar: ${e.message}")
+        onError("Erro inesperado: ${e.message}")
+    }
 }
 
 private fun saveOccurrence(
     context: Context,
     occurrenceDTO: OccurrenceDTO,
-    onSuccess: () -> Unit
+    onSuccess: () -> Unit,
+    onError: ((String) -> Unit)? = null
 ) {
     val userId = Firebase.auth.currentUser?.uid
     if (userId == null) {
         Log.e("Firebase", "Usuário não autenticado.")
+        onError?.invoke("Usuário não autenticado.")
         return
     }
 
-    val reportsRef = FirebaseDatabase.getInstance().getReference("reports")
+    try {
+        // Validar dados antes de salvar
+        if (occurrenceDTO.description.isEmpty() ||
+            occurrenceDTO.local.isEmpty() ||
+            occurrenceDTO.category.isEmpty()) {
+            onError?.invoke("Dados obrigatórios não preenchidos")
+            return
+        }
 
-    val occurrenceData = mapOf(
-        "autor" to userId,
-        "text" to occurrenceDTO.description,
-        "status" to "red",
-        "img_url" to occurrenceDTO.imgBase64,
-        "local" to occurrenceDTO.local
-    )
+        // Validar Base64 da imagem
+        if (occurrenceDTO.imgBase64.isNotEmpty() && base64ToBitmap(occurrenceDTO.imgBase64) == null) {
+            onError?.invoke("Imagem inválida")
+            return
+        }
 
-    val newRef = reportsRef.push()
-    val newId = newRef.key ?: ""
+        val reportsRef = FirebaseDatabase.getInstance().getReference("reports")
+        val occurrenceData = mapOf(
+            "autor" to userId,
+            "text" to occurrenceDTO.description,
+            "status" to "red",
+            "img_url" to occurrenceDTO.imgBase64,
+            "local" to occurrenceDTO.local,
+            "category" to occurrenceDTO.category,
+            "timestamp" to System.currentTimeMillis()
+        )
 
-    newRef.child("content").setValue(occurrenceData)
-        .addOnSuccessListener {
-            CoroutineScope(Dispatchers.IO).launch {
-                val db = AppDatabase.getDatabase(context)
-                val dao = db.occurrenceDao()
-                dao.insertAll(
-                    listOf(
-                        OccurrenceEntity(
-                            id = newId,
-                            description = occurrenceDTO.description,
-                            imgBase64 = occurrenceDTO.imgBase64,
-                            local = occurrenceDTO.local,
-                            author = userId,
-                            status = "red"
+        val newRef = reportsRef.push()
+        val newId = newRef.key ?: ""
+
+        newRef.child("content").setValue(occurrenceData)
+            .addOnSuccessListener {
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val db = AppDatabase.getDatabase(context)
+                        val dao = db.occurrenceDao()
+                        dao.insertAll(
+                            listOf(
+                                OccurrenceEntity(
+                                    id = newId,
+                                    description = occurrenceDTO.description,
+                                    imgBase64 = occurrenceDTO.imgBase64,
+                                    local = occurrenceDTO.local,
+                                    author = userId,
+                                    status = "red",
+                                    category = occurrenceDTO.category
+                                )
+                            )
                         )
-                    )
-                )
-                withContext(Dispatchers.Main) {
-                    onSuccess()
+                        withContext(Dispatchers.Main) {
+                            onSuccess()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("Database", "Erro ao salvar localmente: ${e.message}")
+                        withContext(Dispatchers.Main) {
+                            onSuccess() // Salvo no Firebase, mas erro local não é crítico
+                        }
+                    }
                 }
             }
-        }
-        .addOnFailureListener { e ->
-            Log.e("Firebase", "Erro ao salvar ocorrência: ${e.message}")
-        }
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "Erro ao salvar ocorrência: ${e.message}")
+                onError?.invoke("Erro ao salvar: ${e.message}")
+            }
+
+    } catch (e: Exception) {
+        Log.e("SaveOccurrence", "Erro fatal ao salvar: ${e.message}")
+        onError?.invoke("Erro inesperado: ${e.message}")
+    }
 }
 
 
@@ -493,72 +646,175 @@ fun getOccurrences(
     val dao = db.occurrenceDao()
 
     CoroutineScope(Dispatchers.IO).launch {
-        if (!forceRefresh) {
-            val cached = dao.getAll()
-            if (cached.isNotEmpty()) {
-                val mapped = cached.map { it.toDTO() }
+        try {
+            // Se não forçar refresh, tenta carregar do cache primeiro
+            if (!forceRefresh) {
+                val cached = dao.getAll()
+                if (cached.isNotEmpty()) {
+                    Log.d("GetOccurrences", "Carregando ${cached.size} items do cache")
+                    val mapped = cached.mapNotNull { entity ->
+                        try {
+                            entity.toDTO()
+                        } catch (e: Exception) {
+                            Log.e("DataMapping", "Erro ao converter entidade: ${e.message}")
+                            null
+                        }
+                    }
+                    withContext(Dispatchers.Main) {
+                        onResult(mapped)
+                    }
+                    return@launch
+                }
+            }
+
+            val userId = Firebase.auth.currentUser?.uid
+            if (userId == null) {
+                Log.e("Auth", "Usuário não autenticado")
                 withContext(Dispatchers.Main) {
-                    onResult(mapped)
+                    onResult(emptyList())
                 }
                 return@launch
             }
-        }
 
-        val userId = Firebase.auth.currentUser?.uid
-        if (userId == null) return@launch
+            Log.d("GetOccurrences", "Buscando dados do Firebase para userId: $userId")
+            val reportsRef = FirebaseDatabase.getInstance().getReference("reports")
 
-        val reportsRef = FirebaseDatabase.getInstance().getReference("reports")
-        reportsRef.orderByChild("content/autor")
-            .equalTo(userId)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
+            reportsRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val occurrences = mutableListOf<OccurrenceDTO>()
-                    val entities = mutableListOf<OccurrenceEntity>()
-
-                    for (child in snapshot.children) {
-                        val content = child.child("content")
-
-                        // Pula itens deletados
-                        val isDeleted = content.child("deleted").getValue(Boolean::class.java) ?: false
-                        if (isDeleted) continue
-
-                        // resto do código permanece igual...
-                        val dto = OccurrenceDTO(
-                            id = child.key ?: "",
-                            description = content.child("text").getValue(String::class.java) ?: "",
-                            imgBase64 = content.child("img_url").getValue(String::class.java) ?: "",
-                            local = content.child("local").getValue(String::class.java) ?: "",
-                            author = userId,
-                            status = when (content.child("status").getValue(String::class.java)) {
-                                "yellow" -> Status.ON_PROGRESS
-                                "green" -> Status.FINISHED
-                                else -> Status.PENDENT
-                            }
-                        )
-
-                        occurrences.add(dto)
-                        entities.add(dto.toEntity())
-                    }
+                    Log.d("Firebase", "Snapshot recebido com ${snapshot.childrenCount} children")
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        dao.clearAll()
-                        dao.insertAll(entities)
-                    }
+                        try {
+                            val occurrences = mutableListOf<OccurrenceDTO>()
+                            val entities = mutableListOf<OccurrenceEntity>()
 
-                    onResult(occurrences)
+                            for (child in snapshot.children) {
+                                try {
+                                    val content = child.child("content")
+                                    Log.d("Firebase", "Processando child: ${child.key}")
+
+                                    // Pula itens deletados
+                                    val isDeleted = content.child("deleted").getValue(Boolean::class.java) ?: false
+                                    if (isDeleted) {
+                                        Log.d("Firebase", "Item ${child.key} está deletado, pulando")
+                                        continue
+                                    }
+
+                                    val id = child.key ?: ""
+                                    val description = content.child("text").getValue(String::class.java) ?: ""
+                                    val category = content.child("category").getValue(String::class.java) ?: ""
+                                    val imgBase64 = content.child("img_url").getValue(String::class.java) ?: ""
+                                    val local = content.child("local").getValue(String::class.java) ?: ""
+                                    val author = content.child("autor").getValue(String::class.java) ?: ""
+                                    val statusString = content.child("status").getValue(String::class.java) ?: "red"
+
+                                    Log.d("Firebase", "Dados do item $id: desc=$description, local=$local, category=$category")
+
+                                    // Verificar se é um item válido
+                                    if (id.isEmpty() || description.isEmpty()) {
+                                        Log.w("Firebase", "Item $id tem dados inválidos, pulando")
+                                        continue
+                                    }
+
+                                    val status = when (statusString) {
+                                        "yellow" -> Status.ON_PROGRESS
+                                        "green" -> Status.FINISHED
+                                        else -> Status.PENDENT
+                                    }
+
+                                    val dto = OccurrenceDTO(
+                                        id = id,
+                                        description = description,
+                                        category = category,
+                                        imgBase64 = imgBase64,
+                                        local = local,
+                                        author = author,
+                                        status = status
+                                    )
+
+                                    val entity = OccurrenceEntity(
+                                        id = id,
+                                        description = description,
+                                        status = statusString,
+                                        imgBase64 = imgBase64,
+                                        local = local,
+                                        author = author,
+                                        category = category
+                                    )
+
+                                    occurrences.add(dto)
+                                    entities.add(entity)
+
+                                    Log.d("Firebase", "Item $id adicionado com sucesso")
+
+                                } catch (e: Exception) {
+                                    Log.e("Firebase", "Erro ao processar item ${child.key}: ${e.message}")
+                                    continue
+                                }
+                            }
+
+                            Log.d("Firebase", "Total de ${occurrences.size} ocorrências processadas")
+
+                            // Salvar no cache
+                            if (entities.isNotEmpty()) {
+                                try {
+                                    dao.clearAll()
+                                    dao.insertAll(entities)
+                                    Log.d("Database", "${entities.size} items salvos no cache")
+                                } catch (e: Exception) {
+                                    Log.e("Database", "Erro ao salvar no cache: ${e.message}")
+                                }
+                            }
+
+                            withContext(Dispatchers.Main) {
+                                Log.d("GetOccurrences", "Retornando ${occurrences.size} ocorrências para a UI")
+                                onResult(occurrences)
+                            }
+
+                        } catch (e: Exception) {
+                            Log.e("Firebase", "Erro geral no processamento: ${e.message}")
+                            withContext(Dispatchers.Main) {
+                                onResult(emptyList())
+                            }
+                        }
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.e("Firebase", "Erro ao buscar: ${error.message}")
+                    Log.e("Firebase", "Erro ao buscar dados: ${error.message}")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        onResult(emptyList())
+                    }
                 }
             })
+
+        } catch (e: Exception) {
+            Log.e("GetOccurrences", "Erro fatal: ${e.message}")
+            withContext(Dispatchers.Main) {
+                onResult(emptyList())
+            }
+        }
     }
 }
 
 private fun base64ToBitmap(base64String: String): Bitmap? {
     return try {
-        val decodeBytes = Base64.decode(base64String, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.size)
+        if (base64String.isEmpty()) return null
+
+        // Limpar o base64 de possíveis prefixos
+        val cleanBase64 = base64String.replace("data:image/[^;]*;base64,".toRegex(), "")
+
+        val decodeBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+        val bitmap = BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.size)
+
+        if (bitmap == null) {
+            Log.e("ImageDecode", "Bitmap decodificado é null para: ${base64String.take(50)}...")
+        }
+
+        bitmap
+    } catch (e: IllegalArgumentException) {
+        Log.e("ImageDecode", "Base64 inválido: ${e.message}")
+        null
     } catch (e: Exception) {
         Log.e("ImageDecode", "Erro ao decodificar imagem: ${e.message}")
         null
@@ -589,5 +845,6 @@ fun OccurrenceDTO.toEntity() = OccurrenceEntity(
     },
     imgBase64 = imgBase64,
     local = local,
-    author = author
+    author = author,
+    category = category
 )

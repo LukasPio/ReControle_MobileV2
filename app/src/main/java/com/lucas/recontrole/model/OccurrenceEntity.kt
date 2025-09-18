@@ -10,7 +10,7 @@ data class OccurrenceEntity(
     val status: String,
     val imgBase64: String,
     val local: String,
-    val author: String
-
+    val author: String,
+    val category: String
 )
 
