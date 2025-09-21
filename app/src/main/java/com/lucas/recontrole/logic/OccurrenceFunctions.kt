@@ -155,7 +155,7 @@ fun saveOccurrence(
 
         val reportsRef = FirebaseDatabase.getInstance().getReference("reports")
         val occurrenceData = mapOf(
-            "autor" to userId,
+            "autor" to occurrenceDTO.author,
             "text" to occurrenceDTO.description,
             "status" to "red",
             "img_url" to occurrenceDTO.imgBase64,

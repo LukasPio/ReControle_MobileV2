@@ -62,7 +62,7 @@ fun OccurrenceCard(
                    modifier = Modifier.weight(1f)
                ) {
                    Text(
-                       if (occurrenceDTO.description.length > 12)
+                       if(!occurrenceDTO.category.isEmpty()) occurrenceDTO.category else if (occurrenceDTO.description.length > 12)
                            occurrenceDTO.description.substring(0, 12).trimEnd() + "..." else occurrenceDTO.description,
                        style = MaterialTheme.typography.headlineSmall
                    )

@@ -198,6 +198,7 @@ fun HomeScreen(navController: NavController) {
 
             // Nenhuma ocorrência
             if (finishedLoading && filteredOccurrences.isEmpty()) {
+                selectedLab = null
                 item {
                     Text(
                         "Parece que ainda não existe nenhum ticket por aqui, tente sincronizar!",
