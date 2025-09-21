@@ -20,8 +20,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lucas.recontrole.Status
@@ -38,35 +41,53 @@ fun OccurrenceCard(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.tertiary
         ),
-        modifier = Modifier.padding(8.dp)
+        modifier = Modifier
+            .padding(4.dp)
             .fillMaxWidth(0.9f)
-            .height(150.dp).clickable{
+            .height(130.dp)
+            .clickable {
                 onClick(
                     occurrenceDTO, image
                 )
             }
     ) {
             Row(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-               Column {
+               Column(
+                   modifier = Modifier.weight(1f)
+               ) {
                    Text(
-                       text = occurrenceDTO.local,
-                       style = MaterialTheme.typography.headlineMedium
+                       if (occurrenceDTO.description.length > 12)
+                           occurrenceDTO.description.substring(0, 12).trimEnd() + "..." else occurrenceDTO.description,
+                       style = MaterialTheme.typography.headlineSmall
                    )
                    Text(
-                       text = when(occurrenceDTO.status) {
+                       text = occurrenceDTO.local + " - " + when(occurrenceDTO.status) {
                            Status.PENDENT -> "Pendente"
                            Status.ON_PROGRESS -> "Em andamento"
                            Status.FINISHED -> "Concluído"
-                       }
+                       },
+                       style = MaterialTheme.typography.titleMedium,
+                       color = Color.White.copy(alpha = 0.8f),
+                       maxLines = 1,
+                       overflow = TextOverflow.Ellipsis
+                   )
+                   Text(
+                       text = "Ver mais...",
+                       color = Color.White.copy(alpha = 0.6f)
                    )
                }
                 Image(
                     bitmap = image.asImageBitmap(),
                     contentDescription = "Photo of an occurrence",
-                    modifier = Modifier.height(100.dp).width(100.dp),
+                    modifier = Modifier
+                        .height(100.dp)
+                        .width(100.dp),
                     contentScale = ContentScale.Crop
                 )
             }

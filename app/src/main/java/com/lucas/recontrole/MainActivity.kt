@@ -39,4 +39,3 @@ fun AppNavigation() {
         composable("forgotPassword") {ForgotPasswordScreen(navController)}
     }
 }
-

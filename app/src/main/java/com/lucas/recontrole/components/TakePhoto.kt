@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.lucas.recontrole.Constants
 import java.io.ByteArrayOutputStream
 
 @Composable
@@ -95,7 +96,7 @@ fun PhotoModal(
 
 fun bitmapToBase64(bitmap: Bitmap): String {
     val outputStream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+    bitmap.compress(Bitmap.CompressFormat.JPEG, Constants.OCCURRENCE_PHOTO_QUALITY_PERCENTAGE, outputStream)
     val byteArray = outputStream.toByteArray()
     return Base64.encodeToString(byteArray, Base64.DEFAULT)
 }

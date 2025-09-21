@@ -7,4 +7,6 @@ object Constants {
     const val MAX_USER_NAME_LENGTH = 30
     const val MAX_OCCURRENCE_LOCAL_LENGTH = 30
     const val MAX_OCCURRENCE_DESCRIPTION_LENGTH = 100
+
+    const val OCCURRENCE_PHOTO_QUALITY_PERCENTAGE = 70
 }
