@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,10 +24,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -259,92 +263,91 @@ fun HomeScreen(navController: NavController) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(400.dp, 600.dp)
                     ) {
-                        Text(
-                            text = "Detalhes da Ocorrência:",
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Mostrar a imagem
-                        val modalBitmap = remember(occurrenceModalContent.imgBase64) {
-                            base64ToBitmap(occurrenceModalContent.imgBase64)
-                        }
-
-
-                        modalBitmap?.let { bitmap ->
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = "Imagem da ocorrência",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(250.dp),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row {
                             Text(
-                                text = "Local:",
+                                text = "Detalhes da Ocorrência:",
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Mostrar a imagem
+                            val modalBitmap = remember(occurrenceModalContent.imgBase64) {
+                                base64ToBitmap(occurrenceModalContent.imgBase64)
+                            }
+
+
+                            modalBitmap?.let { bitmap ->
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Imagem da ocorrência",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(250.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row {
+                                Text(
+                                    text = "Local:",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontSize = 18.sp
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text(
+                                    text = occurrenceModalContent.local
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Descrição:",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontSize = 18.sp
                             )
-                            Spacer(Modifier.width(5.dp))
                             Text(
-                                text = occurrenceModalContent.local
+                                text = occurrenceModalContent.description,
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row {
+                                Text(
+                                    text = "Status:",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontSize = 18.sp
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text(
+                                    text = when (occurrenceModalContent.status) {
+                                        Status.PENDENT -> "Pendente"
+                                        Status.ON_PROGRESS -> "Em andamento"
+                                        Status.FINISHED -> "Concluído"
+                                    }
+                                )
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    itemToDelete = occurrenceModalContent.id
+                                    showDeleteConfirmation = true
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Apagar ocorrência")
+                            }
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "Descrição:",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontSize = 18.sp
-                        )
-                        Text(
-                            text = occurrenceModalContent.description,
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row {
-                            Text(
-                                text = "Status:",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontSize = 18.sp
-                            )
-                            Spacer(Modifier.width(5.dp))
-                            Text(
-                                text = when (occurrenceModalContent.status) {
-                                    Status.PENDENT -> "Pendente"
-                                    Status.ON_PROGRESS -> "Em andamento"
-                                    Status.FINISHED -> "Concluído"
-                                }
-                            )
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        Button(
-                            onClick = {
-                                itemToDelete = occurrenceModalContent.id
-                                showDeleteConfirmation = true
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Apagar ocorrência")
-                        }
-                    }
                 }
             )
         }
@@ -417,7 +420,7 @@ fun HomeScreen(navController: NavController) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 260.dp, max = 600.dp)
+                            .heightIn(min = 260.dp, max = 700.dp)
                     ) {
                         Text(
                             text = "Insira as informações:",
