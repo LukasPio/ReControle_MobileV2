@@ -201,7 +201,7 @@ fun HomeScreen(navController: NavController) {
                 selectedLab = null
                 item {
                     Text(
-                        "Parece que ainda não existe nenhum ticket por aqui, tente sincronizar!",
+                        "Parece que ainda não existe nenhum ticket por aqui!",
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 50.dp, start = 8.dp, end = 8.dp),
                         style = MaterialTheme.typography.headlineLarge,
