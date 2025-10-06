@@ -81,6 +81,7 @@ import com.lucas.recontrole.dtos.OccurrenceDTO
 import com.lucas.recontrole.logic.base64ToBitmap
 import com.lucas.recontrole.logic.deleteOccurrence
 import com.lucas.recontrole.logic.getOccurrences
+import com.lucas.recontrole.logic.listenOccurrences
 import com.lucas.recontrole.logic.saveOccurrence
 import com.lucas.recontrole.model.OccurrenceEntity
 import kotlinx.coroutines.CoroutineScope
@@ -119,6 +120,14 @@ fun HomeScreen(navController: NavController) {
             finishedLoading = true
         }
     }
+
+    LaunchedEffect(Unit) {
+        listenOccurrences(context) { updatedList ->
+            occurrencesState = updatedList
+            finishedLoading = true
+        }
+    }
+
 
     // Filtrar ocorrências pelo lab selecionado
     val filteredOccurrences = remember(occurrencesState, selectedLab) {

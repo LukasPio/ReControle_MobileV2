@@ -425,3 +425,86 @@ fun base64ToBitmap(base64String: String): Bitmap? {
         null
     }
 }
+
+fun listenOccurrences(
+    context: Context,
+    onUpdate: (List<OccurrenceDTO>) -> Unit
+) {
+    val reportsRef = FirebaseDatabase.getInstance().getReference("reports")
+
+    reportsRef.addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val occurrences = mutableListOf<OccurrenceDTO>()
+                    val entities = mutableListOf<OccurrenceEntity>()
+
+                    for (child in snapshot.children) {
+                        try {
+                            val content = child.child("content")
+
+                            val isDeleted = content.child("deleted").getValue(Boolean::class.java) ?: false
+                            if (isDeleted) continue // Ignorar itens deletados
+
+                            val id = child.key ?: continue
+                            val description = content.child("text").getValue(String::class.java) ?: continue
+                            val category = content.child("category").getValue(String::class.java) ?: ""
+                            val imgBase64 = content.child("img_url").getValue(String::class.java) ?: ""
+                            var local = content.child("local").getValue(String::class.java) ?: ""
+                            val author = content.child("autor").getValue(String::class.java) ?: ""
+                            val statusString = content.child("status").getValue(String::class.java) ?: "red"
+
+                            if (local.isEmpty()) {
+                                local = child.child("selected_obj/sel_lab_id").getValue(String::class.java).toString()
+                            }
+
+                            val status = when (statusString) {
+                                "yellow" -> Status.ON_PROGRESS
+                                "green" -> Status.FINISHED
+                                else -> Status.PENDENT
+                            }
+
+                            val dto = OccurrenceDTO(
+                                id = id,
+                                description = description,
+                                category = category,
+                                imgBase64 = imgBase64,
+                                local = local,
+                                author = author,
+                                status = status
+                            )
+
+                            val entity = dto.toEntity()
+
+                            occurrences.add(dto)
+                            entities.add(entity)
+
+                        } catch (e: Exception) {
+                            Log.e("ListenerOccurrences", "Erro ao processar item ${child.key}: ${e.message}")
+                        }
+                    }
+
+                    // Atualizar cache local
+                    val db = AppDatabase.getDatabase(context)
+                    db.occurrenceDao().clearAll()
+                    db.occurrenceDao().insertAll(entities)
+
+                    // Atualizar UI
+                    withContext(Dispatchers.Main) {
+                        onUpdate(occurrences)
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("ListenerOccurrences", "Erro geral no listener: ${e.message}")
+                    withContext(Dispatchers.Main) {
+                        onUpdate(emptyList())
+                    }
+                }
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.e("ListenerOccurrences", "Listener cancelado: ${error.message}")
+        }
+    })
+}
