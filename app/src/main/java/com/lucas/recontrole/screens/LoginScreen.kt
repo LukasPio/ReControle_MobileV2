@@ -78,7 +78,8 @@ fun LoginScreen(navController: NavController) {
                     userLoginDTO = UserLoginDTO(email, password),
                     onSuccess = {
                         showErrorDialog = false
-                        navController.navigate("home") {
+                        // Navegar para a tela de laboratórios ao invés de home
+                        navController.navigate("labs") {
                             popUpTo(0) {inclusive = true}
                         }
                     },

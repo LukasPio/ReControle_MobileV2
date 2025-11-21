@@ -4,12 +4,22 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.lucas.recontrole.DAO.OccurrenceDao
+import com.lucas.recontrole.dao.NotificationHistoryDao
+import com.lucas.recontrole.dao.OccurrenceDao
 import com.lucas.recontrole.model.OccurrenceEntity
+import com.lucas.recontrole.notification.NotificationHistoryEntity
 
-@Database(entities = [OccurrenceEntity::class], version = 1)
+@Database(
+    entities = [
+        OccurrenceEntity::class,
+        NotificationHistoryEntity::class
+    ],
+    version = 2,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun occurrenceDao(): OccurrenceDao
+    abstract fun notificationHistoryDao(): NotificationHistoryDao
 
     companion object {
         @Volatile
@@ -21,7 +31,10 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build().also { INSTANCE = it }
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { INSTANCE = it }
             }
         }
     }

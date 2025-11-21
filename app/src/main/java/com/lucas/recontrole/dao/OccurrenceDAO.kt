@@ -1,4 +1,4 @@
-package com.lucas.recontrole.DAO
+package com.lucas.recontrole.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
