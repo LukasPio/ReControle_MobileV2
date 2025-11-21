@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.Firebase
@@ -32,11 +33,13 @@ import com.lucas.recontrole.components.ErrorDialog
 import com.lucas.recontrole.components.PasswordInputField
 import com.lucas.recontrole.components.SubmitButton
 import com.lucas.recontrole.components.UserNameInputField
-import com.lucas.recontrole.dtos.UserRequestDTO
 import com.lucas.recontrole.components.SimpleAlertDialog
+import com.lucas.recontrole.dtos.UserRequestDTO
+import com.lucas.recontrole.notifications.NotificationManager
 
 @Composable
 fun RegisterScreen(navController: NavController) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -51,40 +54,42 @@ fun RegisterScreen(navController: NavController) {
             .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-
-        ) {
+    ) {
         AppLogo()
         UserNameInputField(
             name,
-            {it -> name = it}
+            { it -> name = it }
         )
         EmailInputField(
             email,
-            {it -> email = it}
+            { it -> email = it }
         )
         PasswordInputField(
             password,
             "Senha",
             "Digite sua senha",
-            {it -> password = it}
+            { it -> password = it }
         )
         PasswordInputField(
             passwordConfirmation,
             "Confirme a senha",
             "Digite sua senha novamente",
-            {it -> passwordConfirmation = it}
+            { it -> passwordConfirmation = it }
         )
         Spacer(modifier = Modifier.height(8.dp))
         SubmitButton(
             "Criar conta",
             {
                 createAccount(
-                    UserRequestDTO(name, email, password, passwordConfirmation),
+                    context = context,
+                    userRequestDTO = UserRequestDTO(name, email, password, passwordConfirmation),
                     onError = {
                         errorMessage = it
                         showErrorDialog = true
                     },
                     onSuccess = {
+                        // Iniciar monitoramento após criar conta
+                        NotificationManager.startMonitoring(context)
                         showSimpleAlertDialog = true
                     }
                 )
@@ -108,8 +113,8 @@ fun RegisterScreen(navController: NavController) {
         }
         if (showErrorDialog) {
             ErrorDialog(
-                onDismissRequest = {showErrorDialog = false},
-                onConfirmation = {showErrorDialog = false},
+                onDismissRequest = { showErrorDialog = false },
+                onConfirmation = { showErrorDialog = false },
                 dialogText = errorMessage
             )
         }
@@ -118,11 +123,11 @@ fun RegisterScreen(navController: NavController) {
                 onDismissRequest = {
                     showSimpleAlertDialog = false
                     navController.navigate("login")
-                                   },
+                },
                 onConfirmation = {
                     showSimpleAlertDialog = false
                     navController.navigate("login")
-                                 },
+                },
                 "Sua conta foi criada!",
                 "Por favor, cheque seu email para verificação do mesmo"
             )
@@ -131,6 +136,7 @@ fun RegisterScreen(navController: NavController) {
 }
 
 private fun createAccount(
+    context: android.content.Context,
     userRequestDTO: UserRequestDTO,
     onError: (String) -> Unit,
     onSuccess: () -> Unit
@@ -145,8 +151,8 @@ private fun createAccount(
     val auth = Firebase.auth
 
     auth.createUserWithEmailAndPassword(
-            userRequestDTO.email,
-            userRequestDTO.password
+        userRequestDTO.email,
+        userRequestDTO.password
     ).addOnSuccessListener { result ->
         val user = result.user
         val profileUpdate = userProfileChangeRequest { displayName = userRequestDTO.name }
@@ -154,13 +160,13 @@ private fun createAccount(
         user!!.sendEmailVerification()
         onSuccess()
     }
-    .addOnFailureListener { error ->
-        if (error is FirebaseAuthUserCollisionException) {
-            onError("Este e-mail já está em uso")
-            return@addOnFailureListener
+        .addOnFailureListener { error ->
+            if (error is FirebaseAuthUserCollisionException) {
+                onError("Este e-mail já está em uso")
+                return@addOnFailureListener
+            }
+            onError("Erro interno, tente novamente mais tarde")
         }
-        onError("Erro interno, tente novamente mais tarde")
-    }
 }
 
 private fun validateUser(userRequestDTO: UserRequestDTO): Pair<Boolean, String> {

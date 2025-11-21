@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.Firebase
@@ -32,9 +33,11 @@ import com.lucas.recontrole.components.EmailInputField
 import com.lucas.recontrole.components.ErrorDialog
 import com.lucas.recontrole.components.PasswordInputField
 import com.lucas.recontrole.components.SubmitButton
+import com.lucas.recontrole.notifications.NotificationManager
 
 @Composable
 fun LoginScreen(navController: NavController) {
+    val context = LocalContext.current
     var password by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var showErrorDialog by remember { mutableStateOf(false) }
@@ -75,12 +78,14 @@ fun LoginScreen(navController: NavController) {
             text = "Login",
             onClick = {
                 login(
+                    context = context,
                     userLoginDTO = UserLoginDTO(email, password),
                     onSuccess = {
                         showErrorDialog = false
-                        // Navegar para a tela de laboratórios ao invés de home
+                        // Iniciar monitoramento de notificações
+                        NotificationManager.startMonitoring(context)
                         navController.navigate("labs") {
-                            popUpTo(0) {inclusive = true}
+                            popUpTo(0) { inclusive = true }
                         }
                     },
                     onError = {
@@ -106,8 +111,8 @@ fun LoginScreen(navController: NavController) {
         }
         if (showErrorDialog) {
             ErrorDialog(
-                onDismissRequest = {showErrorDialog = false},
-                onConfirmation = {showErrorDialog = false},
+                onDismissRequest = { showErrorDialog = false },
+                onConfirmation = { showErrorDialog = false },
                 dialogText = errorMessage
             )
         }
@@ -115,11 +120,12 @@ fun LoginScreen(navController: NavController) {
 }
 
 private fun login(
+    context: android.content.Context,
     userLoginDTO: UserLoginDTO,
     onSuccess: () -> Unit,
     onError: (String) -> Unit
 ) {
-    val validData = validate(userLoginDTO);
+    val validData = validate(userLoginDTO)
 
     if (!validData.first) {
         onError(validData.second)

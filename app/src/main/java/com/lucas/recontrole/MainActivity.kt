@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,13 +29,17 @@ import com.lucas.recontrole.ui.theme.ReControleTheme
 
 class MainActivity : ComponentActivity() {
 
-    // Launcher para solicitar permissão de notificação (Android 13+)
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Permissão concedida, iniciar monitoramento
-            NotificationManager.startMonitoring(this)
+            Log.d("MainActivity", "Permissão de notificação concedida")
+            // Iniciar monitoramento quando permissão é concedida
+            if (Firebase.auth.currentUser != null) {
+                NotificationManager.startMonitoring(this)
+            }
+        } else {
+            Log.d("MainActivity", "Permissão de notificação negada")
         }
     }
 
@@ -45,8 +50,9 @@ class MainActivity : ComponentActivity() {
         // Solicitar permissão de notificação (Android 13+)
         requestNotificationPermission()
 
-        // Iniciar monitoramento de ocorrências se usuário estiver logado
-        if (Firebase.auth.currentUser != null) {
+        // Se usuário está logado e permissão está concedida, iniciar monitoramento
+        if (Firebase.auth.currentUser != null && hasNotificationPermission()) {
+            Log.d("MainActivity", "Usuário logado, iniciando monitoramento")
             NotificationManager.startMonitoring(this)
         }
 
@@ -64,30 +70,44 @@ class MainActivity : ComponentActivity() {
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED -> {
-                    // Permissão já concedida
+                    Log.d("MainActivity", "Permissão de notificação já concedida")
                 }
                 else -> {
-                    // Solicitar permissão ao usuário
+                    Log.d("MainActivity", "Solicitando permissão de notificação")
                     requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         }
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Nota: NÃO parar o monitoramento aqui!
+        // O Worker continuará rodando em background
     }
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    // Após login, redirecionar para tela de laboratórios
     val initialScreen = if (Firebase.auth.currentUser != null) "labs" else "login"
 
     NavHost(navController = navController, startDestination = initialScreen) {
-        // Tela de laboratórios (nova tela inicial após login)
         composable("labs") {
             LabsScreen(navController)
         }
 
-        // Tela de ocorrências por laboratório
         composable(
             route = "labOccurrences/{labName}",
             arguments = listOf(navArgument("labName") { type = NavType.StringType })
@@ -96,12 +116,10 @@ fun AppNavigation() {
             LabOccurrencesScreen(navController, labName)
         }
 
-        // Tela home (mantida para compatibilidade - opcional)
         composable("home") {
             HomeScreen(navController)
         }
 
-        // Rotas de autenticação
         composable("register") {
             RegisterScreen(navController)
         }

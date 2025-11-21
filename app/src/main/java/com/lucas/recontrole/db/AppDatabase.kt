@@ -14,7 +14,7 @@ import com.lucas.recontrole.notification.NotificationHistoryEntity
         OccurrenceEntity::class,
         NotificationHistoryEntity::class
     ],
-    version = 2,
+    version = 3, // Aumentado para 3 por causa da nova entidade
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,7 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration() // Limpa BD em caso de versão incompatível
                     .build()
                     .also { INSTANCE = it }
             }

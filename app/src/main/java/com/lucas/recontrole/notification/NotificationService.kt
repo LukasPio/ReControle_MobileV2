@@ -58,8 +58,8 @@ object NotificationService {
             Status.FINISHED -> "Concluído"
         }
 
-        val title = "Status Atualizado"
-        val message = "$occurrenceCategory ($occurrenceLocal) está agora: $statusText"
+        val title = "Ocorrência atualizada"
+        val message = "$occurrenceCategory ($occurrenceLocal) está: $statusText"
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.outline_warning_24) // Use um ícone do seu projeto

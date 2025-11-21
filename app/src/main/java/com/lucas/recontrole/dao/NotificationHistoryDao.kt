@@ -9,12 +9,15 @@ import com.lucas.recontrole.notification.NotificationHistoryEntity
 @Dao
 interface NotificationHistoryDao {
 
-    @Query("SELECT * FROM notification_history WHERE occurrenceId = :occurrenceId LIMIT 1")
-    suspend fun findByOccurrenceId(occurrenceId: String): NotificationHistoryEntity?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(notification: NotificationHistoryEntity)
 
-    @Query("DELETE FROM notification_history WHERE occurrenceId = :occurrenceId")
-    suspend fun delete(occurrenceId: String)
+    @Query("SELECT * FROM notification_history WHERE occurrenceId = :occurrenceId ORDER BY notifiedAt DESC LIMIT 1")
+    suspend fun getLastNotificationForOccurrence(occurrenceId: String): NotificationHistoryEntity?
+
+    @Query("DELETE FROM notification_history WHERE notifiedAt < :timestamp")
+    suspend fun deleteOldNotifications(timestamp: Long)
+
+    @Query("SELECT COUNT(*) FROM notification_history WHERE occurrenceId = :occurrenceId AND newStatus = :newStatus")
+    suspend fun countNotificationsWithStatus(occurrenceId: String, newStatus: String): Int
 }
